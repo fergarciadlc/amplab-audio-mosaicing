@@ -5,9 +5,10 @@ import freesound
 import pandas as pd
 
 # Configuration
-FREESOUND_API_KEY = (
-    "0v2U7qatbaKTfmPfq7xncCnPpRvKzzLsnoDIIqay"  # Replace with your own API key
-)
+FREESOUND_API_KEY = os.getenv("FREESOUND_API_KEY", None)
+if not FREESOUND_API_KEY:
+    raise ValueError("FREESOUND_API_KEY environment variable is not set")
+
 FILES_DIR = "files"  # Folder for downloaded audio files
 DATAFRAME_FILENAME = "dataframe.csv"
 FREESOUND_STORE_METADATA_FIELDS = [
