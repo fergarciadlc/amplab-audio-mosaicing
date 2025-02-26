@@ -18,6 +18,8 @@ if "target_df" not in st.session_state:
     st.session_state.target_df = None
 if "target_audio_path" not in st.session_state:
     st.session_state.target_audio_path = None
+if "frame_size" not in st.session_state:
+    st.session_state.frame_size = 819
 
 # Sidebar for navigation (only two pages now)
 page = st.sidebar.radio("Choose Action", ("Downloader", "Analyzer"))
@@ -29,6 +31,10 @@ if page == "Downloader":
     st.title("Downloader & Source Analysis")
     st.write(
         "Define queries to download sounds from Freesound and analyze the source collection."
+    )
+
+    st.session_state.frame_size = st.number_input(
+        "Frame Size (samples)", min_value=1024, max_value=44100, value=8192, step=1024
     )
 
     # Dynamic query input
@@ -64,13 +70,16 @@ if page == "Downloader":
 
         st.info("Analyzing source collection...")
         # You can also allow the user to choose the frame size for source analysis if needed
-        frame_size = 8192
         source_df = analyze_collection(
-            meta_df, frame_size=frame_size, output_csv="dataframe_source.csv"
+            meta_df,
+            frame_size=st.session_state.frame_size,
+            output_csv="dataframe_source.csv",
         )
         st.session_state.source_df = source_df
         st.success("Source collection analyzed!")
         st.dataframe(source_df)
+        st.info("You can go to the 'Analyzer' tab to analyze a target audio file.")
+
 
 ##############################
 # Analyzer & Mosaicer Section
@@ -83,7 +92,11 @@ elif page == "Analyzer":
 
     uploaded_file = st.file_uploader("Upload Target Audio", type=["wav", "mp3", "ogg"])
     frame_size = st.number_input(
-        "Frame Size (samples)", min_value=1024, max_value=16384, value=8192, step=1024
+        f"Frame Size (samples) - Audio collection used {st.session_state.frame_size} for feature analysis",
+        min_value=1024,
+        max_value=44100,
+        value=st.session_state.frame_size,
+        step=1024,
     )
 
     if uploaded_file is not None:
@@ -106,7 +119,14 @@ elif page == "Analyzer":
         st.dataframe(target_df)
 
         st.write("Target Analysis Waveform:")
-        plot_waveform_with_frames(target_path, target_df)
+
+        seconds_to_plot = st.number_input(
+            "Seconds to plot", min_value=1, max_value=10 * 60, value=4
+        )
+
+        plot_waveform_with_frames(
+            target_path, target_df, duration_seconds=seconds_to_plot
+        )
         st.pyplot(plt.gcf())
         plt.clf()
 
@@ -123,13 +143,6 @@ elif page == "Analyzer":
                     output_filename,
                 )
                 st.success("Audio mosaicing complete!")
-
-                # Plot target waveform (re-using the analyzer plotting function)
-                st.subheader("Target Audio Waveform")
-                fig, ax = plt.subplots(figsize=(15, 4))
-                plot_waveform_with_frames(target_path, st.session_state.target_df)
-                st.pyplot(fig)
-                plt.clf()
 
                 # Plot reconstructed audio waveform
                 st.subheader("Reconstructed Audio Waveform")
