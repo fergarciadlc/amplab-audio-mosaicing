@@ -57,6 +57,41 @@ def analyze_sound(audio_path, frame_size=None, audio_id=None, sync_with_beats=Fa
         for j, coeff in enumerate(mfcc_coeffs):
             frame_output[f"mfcc_{j}"] = coeff
 
+        # Extract spectral centroid
+        spectral_centroid_algo = estd.SpectralCentroidTime()
+        spectral_centroid = spectral_centroid_algo(frame)
+        frame_output["spectral_centroid"] = spectral_centroid
+
+        # Danceability
+        danceability_algo = estd.Danceability()
+        danceability, _ = danceability_algo(frame)
+        frame_output["danceability"] = danceability
+
+        # Spectral Flux
+        flux_algo = estd.Flux()
+        flux = flux_algo(spec)
+        frame_output["flux"] = flux
+
+        # High Frequency Content
+        hfc_algo = estd.HFC()
+        hfc = hfc_algo(spec)
+        frame_output["hfc"] = hfc
+
+        # Spectral Complexity
+        spectral_complexity_algo = estd.SpectralComplexity()
+        spectral_complexity = spectral_complexity_algo(spec)
+        frame_output["spectral_complexity"] = spectral_complexity
+
+        # Pitch Salience
+        pitch_salience_algo = estd.PitchSalience()
+        pitch_salience = pitch_salience_algo(spec)
+        frame_output["pitch_salience"] = pitch_salience
+
+        # Intensity
+        intensity_algo = estd.Intensity()
+        intensity = intensity_algo(frame)
+        frame_output["intensity"] = intensity
+
         analysis_output.append(frame_output)
     return analysis_output
 
