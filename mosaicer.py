@@ -89,7 +89,13 @@ def choose_frame_from_source_collection(
         raise ValueError(f"Invalid choice: {choice}")
 
 
-def reconstruct_audio(df_source, df_target, output_filename):
+def reconstruct_audio(
+    df_source,
+    df_target,
+    output_filename,
+    similarity_features=similarity_features,
+    choice="random",  # random or best
+):
     """
     Reconstruct the target audio using source frames.
 
@@ -107,7 +113,12 @@ def reconstruct_audio(df_source, df_target, output_filename):
     print("Reconstructing audio file...")
     for i in range(len(df_target)):
         target_frame = df_target.iloc[i]
-        source_frame = choose_frame_from_source_collection(target_frame, df_source)
+        source_frame = choose_frame_from_source_collection(
+            target_frame=target_frame,
+            df_source_frames=df_source,
+            similarity_features=similarity_features,
+            choice=choice,
+        )
         selected_freesound_ids.append(source_frame["freesound_id"])
         frame_length = target_frame["end_sample"] - target_frame["start_sample"]
         source_audio_segment = get_audio_file_segment(

@@ -1,15 +1,23 @@
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import streamlit as st
 
 from analyzer import (analyze_collection, analyze_target,
                       plot_waveform_with_frames)
-# Import our modules (ensure these are in your PYTHONPATH or same folder)
 from downloader import download_collection
 from mosaicer import reconstruct_audio
+
+st.set_page_config(layout="wide")
+st.title("Audio Mosaicing with Freesound and Essentia 🎶🎸")
+st.header("Welcome to the Audio Mosaicing App!")
+st.markdown(
+    """
+This app allows you to download sounds from Freesound, 
+analyze them, and then reconstruct a target audio file using the source collection.
+
+Developed with ♥️ by [Fernando Garcia de la Cruz](https://fergarciadlc.github.io/)
+    """
+)
 
 # Initialize session state variables if not present
 if "source_df" not in st.session_state:
@@ -19,7 +27,7 @@ if "target_df" not in st.session_state:
 if "target_audio_path" not in st.session_state:
     st.session_state.target_audio_path = None
 if "frame_size" not in st.session_state:
-    st.session_state.frame_size = 819
+    st.session_state.frame_size = 8192
 
 # Sidebar for navigation (only two pages now)
 page = st.sidebar.radio("Choose Action", ("Downloader", "Analyzer"))
@@ -69,7 +77,6 @@ if page == "Downloader":
         st.dataframe(meta_df)
 
         st.info("Analyzing source collection...")
-        # You can also allow the user to choose the frame size for source analysis if needed
         source_df = analyze_collection(
             meta_df,
             frame_size=st.session_state.frame_size,
@@ -78,8 +85,7 @@ if page == "Downloader":
         st.session_state.source_df = source_df
         st.success("Source collection analyzed!")
         st.dataframe(source_df)
-        st.info("You can go to the 'Analyzer' tab to analyze a target audio file.")
-
+        st.info("You can now go to the 'Analyzer' tab to analyze a target audio file.")
 
 ##############################
 # Analyzer & Mosaicer Section
@@ -119,20 +125,62 @@ elif page == "Analyzer":
         st.dataframe(target_df)
 
         st.write("Target Analysis Waveform:")
-
         seconds_to_plot = st.number_input(
-            "Seconds to plot", min_value=1, max_value=10 * 60, value=4
+            "Seconds to plot", min_value=1, max_value=600, value=4
         )
-
         plot_waveform_with_frames(
             target_path, target_df, duration_seconds=seconds_to_plot
         )
         st.pyplot(plt.gcf())
         plt.clf()
 
+        st.subheader("Mosaicing Options")
+        st.write("Select the features to use for similarity:")
+
+        # Default list of similarity features
+        default_features = [
+            "mfcc_0",
+            "mfcc_1",
+            "mfcc_2",
+            "mfcc_3",
+            "mfcc_4",
+            "mfcc_5",
+            "mfcc_6",
+            "mfcc_7",
+            "mfcc_8",
+            "mfcc_9",
+            "mfcc_10",
+            "mfcc_11",
+            "mfcc_12",
+            "loudness",
+            "spectral_centroid",
+            "danceability",
+            "flux",
+            "hfc",
+            "spectral_complexity",
+            "pitch_salience",
+            "intensity",
+        ]
+
+        # Split into three columns (using slicing to preserve order)
+        col1, col2, col3 = st.columns(3)
+        selected_features = []
+
+        for feature in default_features[0:7]:
+            if col1.checkbox(feature, value=True):
+                selected_features.append(feature)
+        for feature in default_features[7:14]:
+            if col2.checkbox(feature, value=True):
+                selected_features.append(feature)
+        for feature in default_features[14:]:
+            if col3.checkbox(feature, value=True):
+                selected_features.append(feature)
+
+        st.write("Select frame selection strategy:")
+        selected_choice = st.radio("Choice", ("random", "best"))
+
         # Now add the "Mosaic It!" button on the same page.
         if st.button("Mosaic It!"):
-            # Ensure that source analysis is available
             if st.session_state.source_df is None:
                 st.error("Please run the Downloader & Source Analysis step first!")
             else:
@@ -141,10 +189,13 @@ elif page == "Analyzer":
                     st.session_state.source_df,
                     st.session_state.target_df,
                     output_filename,
+                    similarity_features=selected_features,
+                    choice=selected_choice,
                 )
                 st.success("Audio mosaicing complete!")
+                st.info(f"Selected features: {selected_features}")
+                st.info(f"Selected choice: {selected_choice}")
 
-                # Plot reconstructed audio waveform
                 st.subheader("Reconstructed Audio Waveform")
                 fig2, ax2 = plt.subplots(figsize=(15, 4))
                 ax2.plot(generated_audio)
@@ -154,11 +205,10 @@ elif page == "Analyzer":
 
                 st.subheader("Listen to the Results")
                 st.write("**Target Audio:**")
-                st.audio(target_path)
+                st.audio(st.session_state.target_audio_path)
                 st.write("**Reconstructed Audio:**")
                 st.audio(output_filename)
                 st.write("**Mixed Audio (50/50):**")
-                # Create a mixed signal for playback
                 mix = (target_audio * 0.5 + generated_audio * 0.5).astype(np.float32)
                 mix_file = "mix.wav"
                 from essentia.standard import MonoWriter
@@ -167,7 +217,6 @@ elif page == "Analyzer":
                 st.audio(mix_file)
 
                 st.write("**Freesound IDs used in the reconstruction:**")
-                # Filter metadata by selected freesound ids (assumes source_df has a 'freesound_id' column)
                 ids_used = st.session_state.source_df[
                     st.session_state.source_df["freesound_id"].isin(selected_ids)
                 ]
