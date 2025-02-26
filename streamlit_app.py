@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
+from streamlit_option_menu import option_menu
 
 from analyzer import (analyze_collection, analyze_target,
                       plot_waveform_with_frames)
@@ -8,8 +9,11 @@ from downloader import download_collection
 from mosaicer import reconstruct_audio
 
 st.set_page_config(layout="wide")
+
+
+st.logo("assets/upf_mtg.png", size="large")
+
 st.title("Audio Mosaicing with Freesound and Essentia 🎶🎸")
-st.header("Welcome to the Audio Mosaicing App!")
 st.markdown(
     """
 This app allows you to download sounds from Freesound, 
@@ -30,7 +34,14 @@ if "frame_size" not in st.session_state:
     st.session_state.frame_size = 8192
 
 # Sidebar for navigation (only two pages now)
-page = st.sidebar.radio("Choose Action", ("Downloader", "Analyzer"))
+with st.sidebar:
+    page = option_menu(
+        menu_title=None,  # "Main Menu",  # required
+        options=["Downloader", "Analyzer"],  # list of menu options
+        icons=["cloud-download", "clipboard2-data"],  # optional icons
+        menu_icon="cast",  # optional menu icon
+        default_index=0,  # index of the default selected option
+    )
 
 ##############################
 # Downloader Section
@@ -40,6 +51,7 @@ if page == "Downloader":
     st.write(
         "Define queries to download sounds from Freesound and analyze the source collection."
     )
+    st.image("assets/freesound.png", width=200)
 
     st.session_state.frame_size = st.number_input(
         "Frame Size (samples)", min_value=1024, max_value=44100, value=8192, step=1024
@@ -50,7 +62,7 @@ if page == "Downloader":
         "Number of queries", min_value=1, max_value=10, value=3
     )
     queries = []
-    default_queries = ["organ", "violin", "scream"]
+    default_queries = ["organ", "violin", "ocean"]
     for i in range(int(num_queries)):
         st.subheader(f"Query {i+1}")
         query_text = st.text_input(
@@ -92,6 +104,7 @@ if page == "Downloader":
 ##############################
 elif page == "Analyzer":
     st.title("Target Audio Analysis & Mosaicing")
+    st.image("assets/essentia.png", width=100)
     st.write(
         "Upload your target audio file, set the frame size for analysis, and then mosaic the audio."
     )
@@ -138,20 +151,10 @@ elif page == "Analyzer":
         st.write("Select the features to use for similarity:")
 
         # Default list of similarity features
+        # fmt: off
         default_features = [
-            "mfcc_0",
-            "mfcc_1",
-            "mfcc_2",
-            "mfcc_3",
-            "mfcc_4",
-            "mfcc_5",
-            "mfcc_6",
-            "mfcc_7",
-            "mfcc_8",
-            "mfcc_9",
-            "mfcc_10",
-            "mfcc_11",
-            "mfcc_12",
+            "mfcc_0", "mfcc_1", "mfcc_2", "mfcc_3", "mfcc_4", "mfcc_5", "mfcc_6", "mfcc_7", 
+            "mfcc_8", "mfcc_9", "mfcc_10", "mfcc_11", "mfcc_12",
             "loudness",
             "spectral_centroid",
             "danceability",
@@ -161,6 +164,7 @@ elif page == "Analyzer":
             "pitch_salience",
             "intensity",
         ]
+        # fmt: on
 
         # Split into three columns (using slicing to preserve order)
         col1, col2, col3 = st.columns(3)
