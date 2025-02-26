@@ -11,6 +11,21 @@ from sklearn.neighbors import NearestNeighbors
 # Cache for loaded audio files
 loaded_audio_files = {}
 
+# Features to use for similarity
+# fmt: off
+similarity_features = [
+    "mfcc_0", "mfcc_1", "mfcc_2", "mfcc_3", "mfcc_4", "mfcc_5", "mfcc_6", "mfcc_7", "mfcc_8", "mfcc_9", "mfcc_10", "mfcc_11", "mfcc_12",
+    "loudness",
+    "spectral_centroid",
+    "danceability",
+    "flux",
+    "hfc",
+    "spectral_complexity",
+    "pitch_salience",
+    "intensity",
+]
+# fmt: on
+
 
 def get_audio_file_segment(file_path, start_sample, n_samples):
     """
@@ -48,7 +63,12 @@ def find_similar_frames(query_frame, df_source_frames, n, features):
     return [df_source_frames.iloc[k] for k in indices[0]]
 
 
-def choose_frame_from_source_collection(target_frame, df_source_frames):
+def choose_frame_from_source_collection(
+    target_frame,
+    df_source_frames,
+    similarity_features=similarity_features,
+    choice="random",  # random or best
+):
     """
     Choose a source frame that best matches the target frame.
 
@@ -56,12 +76,17 @@ def choose_frame_from_source_collection(target_frame, df_source_frames):
     frame among the top similar candidates.
     """
     n_neighbours_to_find = 10
-    similarity_features = [f"mfcc_{i}" for i in range(13)]
     query_frame = target_frame[similarity_features].values
     similar_frames = find_similar_frames(
         query_frame, df_source_frames, n_neighbours_to_find, similarity_features
     )
-    return random.choice(similar_frames)
+    # return random.choice(similar_frames)
+    if choice == "random":
+        return random.choice(similar_frames)
+    elif choice == "best":
+        return similar_frames[0]
+    else:
+        raise ValueError(f"Invalid choice: {choice}")
 
 
 def reconstruct_audio(df_source, df_target, output_filename):
