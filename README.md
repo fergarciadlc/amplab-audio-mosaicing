@@ -12,6 +12,17 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+### Set Freesound API key
+```bash
+export FREESOUND_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+If you use a .env file, you can use the following command (in bash):
+```bash
+export $(grep -v '^#' .env | xargs)
+```
+Example .env file in `.env.example` file.
+
 ## Run web app
 ```bash
 streamlit run streamlit_app.py
