@@ -3,6 +3,8 @@ import essentia.standard as estd
 import matplotlib.pyplot as plt
 import pandas as pd
 
+essentia.log.warningActive = False
+
 
 def analyze_sound(audio_path, frame_size=None, audio_id=None, sync_with_beats=False):
     """

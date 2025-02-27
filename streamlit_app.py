@@ -19,7 +19,7 @@ st.markdown(
 This app allows you to download sounds from Freesound, 
 analyze them, and then reconstruct a target audio file using the source collection.
 
-Developed with ♥️ by [Fernando Garcia de la Cruz](https://fergarciadlc.github.io/)
+Developed with ♥️, ☕️ and 🤖 by [Fernando Garcia de la Cruz](https://fergarciadlc.github.io/)
     """
 )
 
@@ -51,7 +51,8 @@ if page == "Downloader":
     st.write(
         "Define queries to download sounds from Freesound and analyze the source collection."
     )
-    st.image("assets/freesound.png", width=200)
+
+    st.image("assets/freesound_dark_mode.svg", width=200)
 
     st.session_state.frame_size = st.number_input(
         "Frame Size (samples)", min_value=1024, max_value=44100, value=8192, step=1024
@@ -104,7 +105,7 @@ if page == "Downloader":
 ##############################
 elif page == "Analyzer":
     st.title("Target Audio Analysis & Mosaicing")
-    st.image("assets/essentia.png", width=100)
+    st.image("assets/essentia.svg", width=200)
     st.write(
         "Upload your target audio file, set the frame size for analysis, and then mosaic the audio."
     )
@@ -117,6 +118,7 @@ elif page == "Analyzer":
         value=st.session_state.frame_size,
         step=1024,
     )
+    sync_with_beats = st.checkbox("Sync with beats (this will ignore the frame size)")
 
     if uploaded_file is not None:
         # Save the uploaded file to the current directory as "target.wav"
@@ -130,7 +132,7 @@ elif page == "Analyzer":
         target_df = analyze_target(
             target_path,
             frame_size=frame_size,
-            sync_with_beats=False,
+            sync_with_beats=sync_with_beats,
             output_csv="dataframe_target.csv",
         )
         st.session_state.target_df = target_df
@@ -181,7 +183,7 @@ elif page == "Analyzer":
                 selected_features.append(feature)
 
         st.write("Select frame selection strategy:")
-        selected_choice = st.radio("Choice", ("random", "best"))
+        mosaicing_sample_selection = st.radio("Choice", ("random", "best"))
 
         # Now add the "Mosaic It!" button on the same page.
         if st.button("Mosaic It!"):
@@ -194,11 +196,11 @@ elif page == "Analyzer":
                     st.session_state.target_df,
                     output_filename,
                     similarity_features=selected_features,
-                    choice=selected_choice,
+                    choice=mosaicing_sample_selection,
                 )
                 st.success("Audio mosaicing complete!")
                 st.info(f"Selected features: {selected_features}")
-                st.info(f"Selected choice: {selected_choice}")
+                st.info(f"Selected choice: {mosaicing_sample_selection}")
 
                 st.subheader("Reconstructed Audio Waveform")
                 fig2, ax2 = plt.subplots(figsize=(15, 4))
